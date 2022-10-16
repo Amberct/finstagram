@@ -23,20 +23,13 @@ post '/signup' do
   end
 end
 
-post '/signup' do
+get '/signup' do
+  @user= User.new
+  erb(:signup)
+end
 
-  # grab user input values from params
-  email      = params[:email]
-  avatar_url = params[:avatar_url]
-  username   = params[:username]
-  password   = params[:password]
-
-  # instantiate and save a User
-  user = User.new({ email: email, avatar_url: avatar_url, username: username, password: password })
-  user.save
-
-  # return readable representation of User object
-  escape_html user.inspect
+get '/login' do
+  erb(:login)
 end
 
 post '/login' do
@@ -56,4 +49,29 @@ end
 get '/logout' do
   session[:user_id] = nil
   redirect to('/')
+end
+
+post '/finstagram_posts/new' do
+end
+
+get '/finstagram_posts/new' do
+  @finstagram_post = FinstagramPost.new
+  erb(:"finstagram_posts/new")
+end
+
+post '/finstagram_posts' do
+  photo_url = params[:photo_url]
+
+  @finstagram_post = FinstagramPost.new({ photo_url: photo_url, user_id: current_user.id })
+
+  if @finstagram_post.save
+    redirect(to('/'))
+  else
+    erb(:"finstagram_posts/new")
+  end
+end
+
+get '/finstagram_posts/:id' do
+  @finstagram_post = FinstagramPost.find(params[:id])   # find the finstagram post with the ID from the URL
+  erb(:"finstagram_posts/show")               # render app/views/finstagram_posts/show.erb
 end
