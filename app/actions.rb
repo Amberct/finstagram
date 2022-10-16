@@ -1,52 +1,59 @@
-  def humanized_time_ago(minute_num)
-    if minute_num >= 60
-      "#{minute_num / 60} hours ago"
-    else
-      "#{minute_num} minutes ago"
-    end
+helpers do
+  def current_user
+    User.find_by(id: session[:user_id])
   end
-  
-  get '/' do
-    @finstagram_post_shark = {
-      username: "sharky_j",
-      avatar_url: "https://live.staticflickr.com/65535/52358606250_01c667c5da_w.jpg",
-      photo_url: "https://live.staticflickr.com/65535/52358421508_786aa10e2c_c.jpg",
-      humanized_time_ago: humanized_time_ago(15),
-      like_count: 0,
-      comment_count: 1,
-      comments: [{
-        username: "sharky_j",
-        text: "Out for the long weekend... too embarrassed to show y'all the beach bod!"
-      }]
-    }
-  
-    @finstagram_post_whale = {
-      username: "kirk_whalum",
-      avatar_url: "https://live.staticflickr.com/65535/52358421348_f34c7996b1.jpg",
-      photo_url: "https://live.staticflickr.com/65535/52357237337_1cc718f6a7_4k.jpg",
-      humanized_time_ago: humanized_time_ago(65),
-      like_count: 0,
-      comment_count: 1,
-      comments: [{
-        username: "kirk_whalum",
-        text: "#weekendvibes"
-      }]
-    }
-  
-    @finstagram_post_marlin = {
-      username: "marlin_peppa",
-      avatar_url: "https://live.staticflickr.com/65535/52358415933_0a0e6bc35f_3k.jpg",
-      photo_url: "https://live.staticflickr.com/65535/52358494794_f88b160d15_4k.jpg",
-      humanized_time_ago: humanized_time_ago(190),
-      like_count: 0,
-      comment_count: 1,
-      comments: [{
-        username: "marlin_peppa",
-        text: "lunchtime! ;)"
-      }]
-    }
-  
-  [@finstagram_post_shark, @finstagram_post_whale, @finstagram_post_marlin].to_s
-    
+end
+get '/' do
+  @finstagram_posts = FinstagramPost.order(created_at: :desc)
   erb(:index)
+end
+
+post '/signup' do
+  email      = params[:email]
+  avatar_url = params[:avatar_url]
+  username   = params[:username]
+  password   = params[:password]
+
+  @user = User.new({ email: email, avatar_url: avatar_url, username: username, password: password })
+
+  if @user.save
+    redirect to('/login')
+  else
+    erb(:signup)
+  end
+end
+
+post '/signup' do
+
+  # grab user input values from params
+  email      = params[:email]
+  avatar_url = params[:avatar_url]
+  username   = params[:username]
+  password   = params[:password]
+
+  # instantiate and save a User
+  user = User.new({ email: email, avatar_url: avatar_url, username: username, password: password })
+  user.save
+
+  # return readable representation of User object
+  escape_html user.inspect
+end
+
+post '/login' do
+  username = params[:username]
+  password = params[:password]
+
+  user = User.find_by(username: username)  
+
+  if user && user.password == password
+    session[:user_id] = user.id
+    redirect to('/')
+  else
+    @error_message = "Login failed."
+    erb(:login)
+  end
+end
+get '/logout' do
+  session[:user_id] = nil
+  redirect to('/')
 end
